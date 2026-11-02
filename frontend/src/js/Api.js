@@ -34,4 +34,14 @@ export default class Api {
     data.append('file', file);
     return this.request('api/files', { method: 'POST', body: data });
   }
+
+  search(query) { return this.request(`api/search?q=${encodeURIComponent(query)}`); }
+  favorites() { return this.request('api/favorites'); }
+  attachments(category) { return this.request(`api/attachments?category=${encodeURIComponent(category)}`); }
+  getPin() { return this.request('api/pin'); }
+  pin(id) { return this.request('api/pin', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); }
+  unpin() { return this.request('api/pin', { method: 'DELETE' }); }
+  favorite(id, isFavorite) {
+    return this.request(`api/messages/${id}/favorite`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isFavorite }) });
+  }
 }

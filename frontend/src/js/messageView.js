@@ -21,7 +21,7 @@ function appendText(parent, text) {
   parent.append(document.createTextNode(text.slice(position)));
 }
 
-export default function messageView(message, api) {
+export default function messageView(message, api, pinnedId = null) {
   const article = document.createElement('article');
   article.className = `message${message.author === 'bot' ? ' bot-message' : ''}`;
   article.dataset.id = message.id;
@@ -52,6 +52,15 @@ export default function messageView(message, api) {
       image.height = 180;
       attachment.append(image);
     }
+    if (file.category === 'audio' || file.category === 'video') {
+      const media = document.createElement(file.category === 'audio' ? 'audio' : 'video');
+      media.controls = true;
+      media.preload = 'metadata';
+      media.src = api.url(`api/files/${file.id}`);
+      media.setAttribute('aria-label', file.name);
+      if (file.category === 'video') { media.width = 320; media.height = 180; }
+      attachment.append(media);
+    }
     const name = document.createElement('strong');
     name.textContent = file.name;
     const info = document.createElement('span');
@@ -64,5 +73,19 @@ export default function messageView(message, api) {
     attachment.append(name, info, download);
     article.append(attachment);
   }
+  const actions = document.createElement('div');
+  actions.className = 'message-actions';
+  for (const [action, label, pressed] of [
+    ['favorite', message.isFavorite ? 'Убрать из избранного' : 'В избранное', message.isFavorite],
+    ['pin', pinnedId === message.id ? 'Открепить' : 'Закрепить', pinnedId === message.id],
+  ]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.action = action;
+    button.textContent = label;
+    button.setAttribute('aria-pressed', String(pressed));
+    actions.append(button);
+  }
+  article.append(actions);
   return article;
 }

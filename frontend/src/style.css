@@ -28,6 +28,23 @@ h1 { font-size: 26px; margin: 0; font-weight: 600; }
 .notice { color: #a63535; background: #fff1ee; border-radius: 8px; margin-top: 12px; padding: 12px 16px; font-size: 14px; }
 .notice:empty { display: none; }
 .history-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; font-size: 12px; color: #85929c; }
+.search-form { display: flex; gap: 10px; align-items: center; padding: 14px 0 2px; }
+.search-form input { flex: 1; min-width: 0; border: 1px solid #e2e9ec; padding: 10px 14px; border-radius: 8px; background: #fafcfc; font-size: 13px; color: #243545; }
+.pinned { display: flex; align-items: center; gap: 20px; border-left: 3px solid #3c8e7c; padding: 10px 14px; margin-top: 14px; background: #f0f7f4; border-radius: 0 8px 8px 0; }
+.pinned > div { flex: 1; min-width: 0; }
+.pinned span { font-size: 11px; font-weight: bold; color: #367d6b; }
+.pinned p { margin: 4px 0 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.command-help { background: #f7f9fc; border-radius: 8px; padding: 12px; margin-top: 12px; }
+.command-help p { font-size: 12px; margin: 0 0 10px; color: #73808e; }
+.command-help > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.command-help button { font-size: 12px; padding: 6px 8px; background: #e8eef4; border-radius: 5px; }
+.category-filter { display: flex; gap: 14px; align-items: center; padding: 0 0 14px; font-size: 13px; }
+.category-filter select { padding: 8px; color: inherit; font: inherit; background: #f7f9fa; border: 1px solid #e2e9ec; border-radius: 6px; }
+.message-actions { display: flex; gap: 18px; margin-top: 13px; padding-top: 9px; border-top: 1px solid #dce9e3; }
+.message-actions button { font-size: 11px; padding: 0; color: #7c9189; }
+.message-actions button[aria-pressed="true"] { color: #24776a; font-weight: bold; }
+.attachment audio, .attachment video { max-width: 100%; border-radius: 8px; }
+.attachment audio { width: 320px; }
 .text-button { color: #26796f; padding: 5px; font-size: 13px; }
 .history { min-height: 0; overflow-y: auto; flex: 1; padding: 0 18px 20px 0; overflow-anchor: none; scrollbar-width: thin; }
 .older-status { text-align: center; font-size: 12px; padding: 8px 0 20px; color: #88959f; min-height: 42px; }

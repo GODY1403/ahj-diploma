@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { createStore, fileCategory, MAX_FILE_SIZE, MAX_STORAGE_SIZE } from './store.js';
+import { createStore, MAX_FILE_SIZE, MAX_STORAGE_SIZE } from './store.js';
+import { botReply } from './commands.js';
 
 const inlineTypes = new Set([
   'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif',
@@ -29,7 +29,36 @@ export function createApp({ store = createStore() } = {}) {
   app.post('/api/messages', (req, res) => {
     const text = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
     if (!text || text.length > 20000) return res.status(400).json({ error: 'Введите текст от 1 до 20 000 символов.' });
-    res.status(201).json({ messages: [store.addMessage(text)] });
+    const messages = [store.addMessage(text)];
+    const reply = botReply(text);
+    if (reply) messages.push(store.addMessage(reply, { author: 'bot' }));
+    res.status(201).json({ messages });
+  });
+
+  app.get('/api/search', (req, res) => {
+    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    if (!query || query.length > 200) return res.status(400).json({ error: 'Введите поисковый запрос от 1 до 200 символов.' });
+    res.json({ messages: store.search(query) });
+  });
+  app.get('/api/favorites', (_req, res) => res.json({ messages: store.messages.filter((message) => message.isFavorite) }));
+  app.patch('/api/messages/:id/favorite', (req, res) => {
+    const message = store.messages.find((item) => item.id === req.params.id);
+    if (!message) return res.status(404).json({ error: 'Сообщение не найдено.' });
+    if (typeof req.body?.isFavorite !== 'boolean') return res.status(400).json({ error: 'Ожидается логическое значение isFavorite.' });
+    message.isFavorite = req.body.isFavorite;
+    res.json({ message });
+  });
+  app.get('/api/pin', (_req, res) => res.json({ message: store.getPin() }));
+  app.put('/api/pin', (req, res) => {
+    const message = store.messages.find((item) => item.id === req.body?.id);
+    if (!message) return res.status(404).json({ error: 'Сообщение для закрепления не найдено.' });
+    res.json({ message: store.setPin(message.id) });
+  });
+  app.delete('/api/pin', (_req, res) => res.json({ message: store.setPin(null) }));
+  app.get('/api/attachments', (req, res) => {
+    const category = req.query.category || 'all';
+    if (!['all', 'images', 'video', 'audio', 'other'].includes(category)) return res.status(400).json({ error: 'Неизвестная категория файлов.' });
+    res.json({ messages: store.messages.filter((message) => message.attachment && (category === 'all' || message.attachment.category === category)) });
   });
   app.post('/api/files', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Выберите файл.' });
@@ -39,9 +68,7 @@ export function createApp({ store = createStore() } = {}) {
     const originalName = decodedName.includes('\uFFFD') ? req.file.originalname : decodedName;
     const name = originalName.replaceAll('\\', '/').split('/').pop();
     const type = req.file.mimetype || 'application/octet-stream';
-    const attachment = { id: randomUUID(), name, type, size: req.file.size, category: fileCategory(type) };
-    store.files.set(attachment.id, { ...attachment, buffer: req.file.buffer });
-    res.status(201).json({ messages: [store.addMessage('', { attachment })] });
+    res.status(201).json({ messages: [store.addFile(name, type, req.file.buffer)] });
   });
 
   function sendFile(req, res) {
@@ -50,7 +77,7 @@ export function createApp({ store = createStore() } = {}) {
     res.attachment(file.name);
     const inline = !req.path.endsWith('/download') && inlineTypes.has(file.type);
     if (inline) res.set('Content-Disposition', res.get('Content-Disposition').replace('attachment', 'inline'));
-    res.type(inline ? file.type : 'application/octet-stream');
+    res.type(file.type);
     res.set('Accept-Ranges', 'bytes');
     const size = file.buffer.length;
     if (req.headers.range) {

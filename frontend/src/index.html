@@ -10,13 +10,32 @@
     <aside class="sidebar">
       <a class="brand" href="./"><span class="brand-mark">C</span> Chaos<span>Organizer</span></a>
       <p class="sidebar-caption">Личное пространство</p>
-      <nav aria-label="Разделы"><button class="nav-button active" data-mode="history" aria-current="page">Сообщения</button></nav>
+      <nav aria-label="Разделы">
+        <button class="nav-button active" data-mode="history" aria-current="page">Сообщения</button>
+        <button class="nav-button" data-mode="favorites">Избранное</button>
+        <button class="nav-button" data-mode="attachments">Вложения</button>
+        <button class="nav-button" data-help>Команды бота</button>
+      </nav>
       <div class="sidebar-note">Всё важное — в одном месте.<br>Заметки, ссылки и файлы.</div>
     </aside>
     <main class="workspace">
       <header class="header"><div><p class="eyebrow">ВАШ ЛИЧНЫЙ ОРГАНАЙЗЕР</p><h1>Сообщения</h1></div><span class="connection" data-connection>Подключение…</span></header>
+      <form class="search-form" data-search-form role="search">
+        <label class="visually-hidden" for="search">Поиск по всей истории</label>
+        <input type="search" id="search" name="query" placeholder="Найти в сообщениях и названиях файлов…" maxlength="200">
+        <button type="submit" class="text-button">Найти</button>
+        <button type="button" class="text-button" data-clear-search hidden>Сбросить</button>
+      </form>
+      <section class="pinned" aria-label="Закреплённое сообщение" data-pin hidden>
+        <div><span>Закреплено</span><p data-pin-text></p></div><button class="text-button" data-unpin>Открепить</button>
+      </section>
+      <section class="command-help" aria-label="Команды бота" data-command-help hidden>
+        <p>Нажмите на команду, затем отправьте её:</p>
+        <div><button data-command="help">@chaos: help</button><button data-command="time">@chaos: time</button><button data-command="date">@chaos: date</button><button data-command="weather">@chaos: weather</button><button data-command="joke">@chaos: joke</button></div>
+      </section>
       <div class="notice" role="status" data-notice></div>
       <div class="history-toolbar"><span data-history-status>Последние 10 сообщений</span><button class="text-button" data-refresh>Обновить</button></div>
+      <div class="category-filter" data-category-filter hidden><label for="category">Категория файлов</label><select id="category" data-category><option value="all">Все вложения</option><option value="images">Изображения</option><option value="video">Видео</option><option value="audio">Аудио</option><option value="other">Другие файлы</option></select></div>
       <section class="history" aria-label="История сообщений" tabindex="0" data-history>
         <div class="older-status" data-older-status></div>
         <div class="message-list" data-message-list></div>
