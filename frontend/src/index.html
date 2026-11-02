@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chaos Organizer</title>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="./"><span class="brand-mark">C</span> Chaos<span>Organizer</span></a>
+      <p class="sidebar-caption">Личное пространство</p>
+      <nav aria-label="Разделы"><button class="nav-button active" data-mode="history" aria-current="page">Сообщения</button></nav>
+      <div class="sidebar-note">Всё важное — в одном месте.<br>Заметки, ссылки и файлы.</div>
+    </aside>
+    <main class="workspace">
+      <header class="header"><div><p class="eyebrow">ВАШ ЛИЧНЫЙ ОРГАНАЙЗЕР</p><h1>Сообщения</h1></div><span class="connection" data-connection>Подключение…</span></header>
+      <div class="notice" role="status" data-notice></div>
+      <div class="history-toolbar"><span data-history-status>Последние 10 сообщений</span><button class="text-button" data-refresh>Обновить</button></div>
+      <section class="history" aria-label="История сообщений" tabindex="0" data-history>
+        <div class="older-status" data-older-status></div>
+        <div class="message-list" data-message-list></div>
+      </section>
+      <form class="composer" data-composer>
+        <label class="attach-button" title="Прикрепить файл"><span aria-hidden="true">＋</span><span class="visually-hidden">Прикрепить файл</span><input type="file" data-file-input></label>
+        <label class="visually-hidden" for="message-text">Сообщение</label>
+        <textarea id="message-text" name="text" placeholder="Сохраните мысль, ссылку или перетащите файл…" rows="2" maxlength="20000"></textarea>
+        <button class="primary-button" type="submit">Отправить <span aria-hidden="true">↑</span></button>
+      </form>
+      <p class="composer-hint">Enter — отправить · Shift + Enter — новая строка · Файлы до 5 МБ</p>
+      <div class="drop-overlay" data-drop-overlay hidden>Отпустите файл, чтобы сохранить его</div>
+    </main>
+  </div>
+</body>
+</html>

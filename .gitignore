@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.cache/
+.env
+.env.*
+.npmrc
+*.local
+*.log
+*.tmp
+*.swp
+.eslintcache
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+AGENTS.md
