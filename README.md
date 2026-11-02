@@ -1,12 +1,13 @@
 # Chaos Organizer
 
 [![GitHub Actions](https://github.com/GODY1403/ahj-diploma/actions/workflows/pages.yml/badge.svg)](https://github.com/GODY1403/ahj-diploma/actions/workflows/pages.yml)
+[![AppVeyor](https://ci.appveyor.com/api/projects/status/github/GODY1403/ahj-diploma?branch=main&svg=true)](https://ci.appveyor.com/project/GODY1403/ahj-diploma/branch/main)
 
 Однопользовательский бот-органайзер: заметки, ссылки, файлы и поиск в интерфейсе мессенджера. Курсовая работа по модулю «Продвинутый JavaScript в браузере».
 
 [Официальное задание](https://github.com/netology-code/ahj-diploma) · [GitHub Pages](https://gody1403.github.io/ahj-diploma/)
 
-**Публичный запуск проверен:** frontend на [GitHub Pages](https://gody1403.github.io/ahj-diploma/) подключён к [backend на Render Free](https://ahj-diploma-api.onrender.com/api/health). Адрес задан переменной GitHub Actions `CHAOS_API_URL`. Реальные HTTPS/WSS-запросы и основные сценарии опубликованного приложения проверены 2 ноября 2026 года. Конфигурация AppVeyor подготовлена, подключение аккаунта ещё не подтверждено.
+**Публичный запуск проверен:** frontend на [GitHub Pages](https://gody1403.github.io/ahj-diploma/) подключён к [backend на Render Free](https://ahj-diploma-api.onrender.com/api/health). Адрес задан переменной GitHub Actions `CHAOS_API_URL`. Реальные HTTPS/WSS-запросы и основные сценарии опубликованного приложения проверены 2 ноября 2026 года. AppVeyor подключён и успешно выполняет проверки и создание артефакта; публикацию Pages выполняет GitHub Actions.
 
 Все изображения ниже — настоящие скриншоты работающего приложения. Главная страница снята на GitHub Pages с backend Render; остальные изображения — при локальной проверке.
 
@@ -188,11 +189,11 @@ Workflow `.github/workflows/pages.yml` запускается при push в `ma
 
 ### AppVeyor
 
-Официальный README требует AppVeyor. `appveyor.yml` устанавливает Node.js 24.22.1, зависимости обеих частей, запускает тесты, ESLint и сборку, сохраняет артефакт. После успешных проверок он может запускать публикацию через тот же GitHub Actions workflow. Это сохраняет единый штатный способ развёртывания Pages и не требует переписывать `gh-pages`.
+AppVeyor подключён: [сборка 1.0.2 завершилась со статусом Success](https://ci.appveyor.com/project/GODY1403/ahj-diploma/builds/55014205). `appveyor.yml` устанавливает Node.js 24.22.1 и зависимости обеих частей, запускает серверные тесты, npm audit, ESLint и production-сборку Webpack, затем сохраняет артефакт `chaos-frontend.zip`.
 
-Для активации владелец должен войти в AppVeyor, добавить GitHub-проект `GODY1403/ahj-diploma` и выполнить первую сборку. Для связанного запуска публикации добавьте в настройках AppVeyor защищённую переменную `PAGES_DEPLOY_TOKEN`: fine-grained GitHub token только для этого репозитория с разрешением **Actions: Read and write**. Без неё AppVeyor выполняет проверки и создаёт артефакт, но не инициирует deploy. Для его клиентского артефакта можно задать `API_URL` в настройках AppVeyor.
+Фактическую публикацию GitHub Pages выполняет GitHub Actions при push в `main` или ручном запуске workflow. Переменная `PAGES_DEPLOY_TOKEN` **не настроена**, поэтому AppVeyor не инициирует GitHub Actions через API: этот необязательный шаг пропускается без ошибки. В конфигурации сохранена возможность такого запуска при наличии защищённой переменной. Для клиентского артефакта AppVeyor можно отдельно задать `API_URL` в его настройках; сборка Pages использует `CHAOS_API_URL` в GitHub.
 
-**Конфигурация AppVeyor не означает, что интеграция уже подключена.** Сейчас она требует действий владельца. Старые упоминания Heroku в задании заменены конфигурацией Render; GitHub Actions используется дополнительно, требование AppVeyor сохранено и явно отмечено как неподключённое.
+Требование официального задания об AppVeyor выполнено работающей интеграцией. Старые упоминания Heroku заменены развёртыванием backend на Render; публикация frontend настроена через GitHub Actions.
 
 ## Ограничения и демонстрационные данные
 
@@ -201,4 +202,4 @@ Workflow `.github/workflows/pages.yml` запускается при push в `ma
 - Это **одно общее пространство без авторизации**. Любой посетитель публичного URL может читать и добавлять данные. Проект не предназначен для конфиденциальной информации или производственной работы.
 - PNG, тон WAV, тестовый ролик WebM и текст в `backend/demo` созданы специально для проекта. Чужие приватные файлы не используются.
 - Поиск и отдельные списки избранного/вложений предназначены для небольшого учебного набора; ленивая серверная пагинация применяется к основной истории.
-- Интеграция AppVeyor требует подключения владельцем. Публичное приложение проверено отдельно через HTTPS/WSS и в браузере, включая ручное подтверждение Drag & Drop владельцем проекта.
+- Публичное приложение проверено отдельно через HTTPS/WSS и в браузере, включая ручное подтверждение Drag & Drop владельцем проекта.
