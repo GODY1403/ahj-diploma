@@ -22,12 +22,12 @@ deploy_script:
   - ps: |
       if (-not $env:PAGES_DEPLOY_TOKEN) {
         Write-Host 'Публикация из AppVeyor не настроена: добавьте защищённую переменную PAGES_DEPLOY_TOKEN.'
-        exit 0
+      } else {
+        $headers = @{
+          Authorization = "Bearer $env:PAGES_DEPLOY_TOKEN"
+          Accept = 'application/vnd.github+json'
+          'X-GitHub-Api-Version' = '2022-11-28'
+        }
+        $body = @{ ref = 'main' } | ConvertTo-Json
+        Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/GODY1403/ahj-diploma/actions/workflows/pages.yml/dispatches' -Headers $headers -ContentType 'application/json' -Body $body
       }
-      $headers = @{
-        Authorization = "Bearer $env:PAGES_DEPLOY_TOKEN"
-        Accept = 'application/vnd.github+json'
-        'X-GitHub-Api-Version' = '2022-11-28'
-      }
-      $body = @{ ref = 'main' } | ConvertTo-Json
-      Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/GODY1403/ahj-diploma/actions/workflows/pages.yml/dispatches' -Headers $headers -ContentType 'application/json' -Body $body
