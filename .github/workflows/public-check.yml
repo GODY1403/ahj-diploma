@@ -1,0 +1,19 @@
+name: Check public API
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: backend/.node-version
+      - run: node backend/scripts/check-public.js
+        env:
+          API_URL: ${{ vars.CHAOS_API_URL }}
