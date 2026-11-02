@@ -10,7 +10,7 @@ const inlineTypes = new Set([
   'video/mp4', 'video/webm', 'video/ogg',
 ]);
 
-export function createApp({ store = createStore() } = {}) {
+export function createApp({ store = createStore(), notify = () => {} } = {}) {
   const app = express();
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_FILE_SIZE, files: 1, fields: 0 } });
   app.use(cors({ exposedHeaders: ['Content-Disposition', 'Content-Length'] }));
@@ -32,6 +32,7 @@ export function createApp({ store = createStore() } = {}) {
     const messages = [store.addMessage(text)];
     const reply = botReply(text);
     if (reply) messages.push(store.addMessage(reply, { author: 'bot' }));
+    notify({ type: 'messages', messages });
     res.status(201).json({ messages });
   });
 
@@ -46,15 +47,22 @@ export function createApp({ store = createStore() } = {}) {
     if (!message) return res.status(404).json({ error: 'Сообщение не найдено.' });
     if (typeof req.body?.isFavorite !== 'boolean') return res.status(400).json({ error: 'Ожидается логическое значение isFavorite.' });
     message.isFavorite = req.body.isFavorite;
+    notify({ type: 'favorite', message });
     res.json({ message });
   });
   app.get('/api/pin', (_req, res) => res.json({ message: store.getPin() }));
   app.put('/api/pin', (req, res) => {
     const message = store.messages.find((item) => item.id === req.body?.id);
     if (!message) return res.status(404).json({ error: 'Сообщение для закрепления не найдено.' });
-    res.json({ message: store.setPin(message.id) });
+    const pinned = store.setPin(message.id);
+    notify({ type: 'pin', message: pinned });
+    res.json({ message: pinned });
   });
-  app.delete('/api/pin', (_req, res) => res.json({ message: store.setPin(null) }));
+  app.delete('/api/pin', (_req, res) => {
+    store.setPin(null);
+    notify({ type: 'pin', message: null });
+    res.json({ message: null });
+  });
   app.get('/api/attachments', (req, res) => {
     const category = req.query.category || 'all';
     if (!['all', 'images', 'video', 'audio', 'other'].includes(category)) return res.status(400).json({ error: 'Неизвестная категория файлов.' });
@@ -68,7 +76,9 @@ export function createApp({ store = createStore() } = {}) {
     const originalName = decodedName.includes('\uFFFD') ? req.file.originalname : decodedName;
     const name = originalName.replaceAll('\\', '/').split('/').pop();
     const type = req.file.mimetype || 'application/octet-stream';
-    res.status(201).json({ messages: [store.addFile(name, type, req.file.buffer)] });
+    const messages = [store.addFile(name, type, req.file.buffer)];
+    notify({ type: 'messages', messages });
+    res.status(201).json({ messages });
   });
 
   function sendFile(req, res) {

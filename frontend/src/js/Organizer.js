@@ -22,6 +22,14 @@ export default class Organizer {
     this.loading = false;
     this.sending = false;
     this.dragDepth = 0;
+    this.pendingMessages = [];
+    this.refreshPending = false;
+    this.socket = null;
+    this.reconnectTimer = null;
+    this.closed = false;
+    this.hasConnected = false;
+    this.pinVersion = 0;
+    this.pendingFavorites = new Map();
   }
 
   init() {
@@ -84,7 +92,12 @@ export default class Organizer {
       this.dropOverlay.hidden = true;
       this.uploadFiles(event.dataTransfer.files);
     });
-    this.showView('history');
+    window.addEventListener('pagehide', () => {
+      this.closed = true;
+      clearTimeout(this.reconnectTimer);
+      this.socket?.close();
+    });
+    this.showView('history').then(() => this.connectSync());
   }
 
   async showView(mode) {
@@ -159,9 +172,9 @@ export default class Organizer {
     } finally { this.setLoading(false); }
   }
 
-  appendMessages(messages) {
+  appendMessages(messages, scroll = true) {
     this.list.append(...this.makeNodes(messages));
-    this.history.scrollTop = this.history.scrollHeight;
+    if (scroll) this.history.scrollTop = this.history.scrollHeight;
   }
 
   async send(event) {
@@ -215,13 +228,34 @@ export default class Organizer {
     this.form.querySelector('button').disabled = busy;
     this.fileInput.disabled = busy;
     this.form.elements.text.disabled = busy;
+    if (!busy) {
+      if (this.pendingFavorites.size) {
+        for (const [id, message] of this.pendingFavorites) {
+          if (this.messages.has(id)) this.messages.set(id, message);
+        }
+        this.pendingFavorites.clear();
+        this.updateActions();
+      }
+      if (this.mode === 'history' && this.pendingMessages.length) {
+        const messages = this.pendingMessages.splice(0);
+        const atBottom = this.history.scrollHeight - this.history.scrollTop - this.history.clientHeight < 60;
+        this.appendMessages(messages, atBottom);
+      }
+      if (this.refreshPending) {
+        this.refreshPending = false;
+        if (this.mode !== 'history') queueMicrotask(() => this.showView(this.mode));
+      }
+    }
   }
 
   async loadPin() {
+    const version = this.pinVersion;
     try {
       const result = await this.api.getPin();
-      this.pinned = result.message;
-      this.renderPin();
+      if (version === this.pinVersion) {
+        this.pinned = result.message;
+        this.renderPin();
+      }
     } catch (error) { this.notice.textContent = error.message; }
   }
 
@@ -248,10 +282,13 @@ export default class Organizer {
     if (this.changing) return;
     this.changing = true;
     this.notice.textContent = '';
+    const version = this.pinVersion;
     try {
       const result = id ? await this.api.pin(id) : await this.api.unpin();
-      this.pinned = result.message;
-      this.renderPin();
+      if (version === this.pinVersion) {
+        this.pinned = result.message;
+        this.renderPin();
+      }
     } catch (error) { this.notice.textContent = error.message; }
     finally { this.changing = false; }
   }
@@ -267,5 +304,59 @@ export default class Organizer {
       else this.updateActions();
     } catch (error) { this.notice.textContent = error.message; }
     finally { this.changing = false; }
+  }
+
+  connectSync() {
+    if (!this.api.baseUrl || this.closed) return;
+    const url = new URL(this.api.url('ws'));
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.socket = new WebSocket(url);
+    this.socket.addEventListener('open', () => {
+      this.notice.textContent = '';
+      this.connection.textContent = 'Синхронизация включена';
+      this.connection.classList.add('connected');
+      if (this.hasConnected) this.showView(this.mode);
+      this.hasConnected = true;
+    });
+    this.socket.addEventListener('message', (event) => this.handleSync(JSON.parse(event.data)));
+    this.socket.addEventListener('close', () => {
+      if (this.closed) return;
+      this.connection.textContent = 'Нет синхронизации';
+      this.connection.classList.remove('connected');
+      this.notice.textContent = 'Соединение прервано. Повторное подключение произойдёт автоматически; также можно нажать «Обновить».';
+      this.reconnectTimer = setTimeout(() => this.connectSync(), 4000);
+    });
+  }
+
+  handleSync(change) {
+    if (change.type === 'ready') {
+      this.pinVersion += 1;
+      this.pinned = change.pin;
+      this.renderPin();
+      if (this.mode === 'history' && change.latestId && !this.messages.has(change.latestId)) this.showView('history');
+    } else if (change.type === 'pin') {
+      this.pinVersion += 1;
+      this.pinned = change.message;
+      this.renderPin();
+    } else if (change.type === 'favorite') {
+      if (this.loading || this.sending) this.pendingFavorites.set(change.message.id, change.message);
+      if (this.messages.has(change.message.id)) {
+        this.messages.set(change.message.id, change.message);
+        this.updateActions();
+      }
+      if (this.mode === 'favorites') this.refreshFilteredView();
+    } else if (change.type === 'messages') {
+      if (this.mode !== 'history') this.refreshFilteredView();
+      else if (this.loading) this.pendingMessages.push(...change.messages);
+      else {
+        const atBottom = this.history.scrollHeight - this.history.scrollTop - this.history.clientHeight < 60;
+        this.appendMessages(change.messages, atBottom);
+      }
+    }
+  }
+
+  refreshFilteredView() {
+    if (this.loading || this.sending) this.refreshPending = true;
+    else this.showView(this.mode);
   }
 }
