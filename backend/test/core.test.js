@@ -5,7 +5,7 @@ import { createApp } from '../app.js';
 import { createStore, MAX_FILE_SIZE } from '../store.js';
 import { botReply } from '../commands.js';
 
-export async function startServer(t, { seed = true } = {}) {
+async function startServer(t, { seed = true } = {}) {
   const store = createStore({ seed });
   const server = createApp({ store }).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));

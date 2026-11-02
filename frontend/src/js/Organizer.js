@@ -82,8 +82,9 @@ export default class Organizer {
     workspace.addEventListener('dragover', (event) => {
       if (event.dataTransfer.types.includes('Files')) event.preventDefault();
     });
-    workspace.addEventListener('dragleave', () => {
-      this.dragDepth -= 1;
+    workspace.addEventListener('dragleave', (event) => {
+      if (!event.dataTransfer.types.includes('Files')) return;
+      this.dragDepth = Math.max(0, this.dragDepth - 1);
       if (this.dragDepth <= 0) this.dropOverlay.hidden = true;
     });
     workspace.addEventListener('drop', (event) => {
@@ -108,6 +109,7 @@ export default class Organizer {
       return;
     }
     this.mode = mode;
+    if (mode !== 'search') this.searchForm.elements.query.value = '';
     const titles = { history: 'Сообщения', search: 'Результаты поиска', favorites: 'Избранное', attachments: 'Вложения' };
     document.querySelector('h1').textContent = titles[mode];
     document.querySelector('[data-category-filter]').hidden = mode !== 'attachments';
