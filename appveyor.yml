@@ -1,0 +1,33 @@
+version: 1.0.{build}
+image: Visual Studio 2022
+branches:
+  only:
+    - main
+skip_tags: true
+install:
+  - ps: Update-NodeJsInstallation (Get-Content backend/.node-version) x64
+  - cmd: npm --prefix backend ci
+  - cmd: npm --prefix frontend ci
+build_script:
+  - cmd: npm --prefix backend test
+  - cmd: npm --prefix backend audit --omit=dev
+  - cmd: npm --prefix frontend run lint
+  - cmd: npm --prefix frontend audit
+  - cmd: npm --prefix frontend run build
+test: false
+artifacts:
+  - path: frontend\dist
+    name: chaos-frontend
+deploy_script:
+  - ps: |
+      if (-not $env:PAGES_DEPLOY_TOKEN) {
+        Write-Host 'Публикация из AppVeyor не настроена: добавьте защищённую переменную PAGES_DEPLOY_TOKEN.'
+        exit 0
+      }
+      $headers = @{
+        Authorization = "Bearer $env:PAGES_DEPLOY_TOKEN"
+        Accept = 'application/vnd.github+json'
+        'X-GitHub-Api-Version' = '2022-11-28'
+      }
+      $body = @{ ref = 'main' } | ConvertTo-Json
+      Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/GODY1403/ahj-diploma/actions/workflows/pages.yml/dispatches' -Headers $headers -ContentType 'application/json' -Body $body
